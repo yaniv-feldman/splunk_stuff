@@ -1,0 +1,53 @@
+<form>
+  <label>Splunk PS - Forwarder To IF or IDX Sankey - By Selected IF</label>
+  <fieldset submitButton="false">
+    <input type="time" token="time1">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="if1" searchWhenChanged="true">
+      <label>Choose IF</label>
+      <fieldForLabel>host</fieldForLabel>
+      <fieldForValue>host</fieldForValue>
+      <search>
+        <query>index=_internal  group=tcp*_connections   sourcetype=splunkd 
+| eventstats dc(group) as GROUP  by host
+| eval isIF=if(GROUP==2,"yes","no")
+| where isIF=="yes"
+| dedup host | table host</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Forwarder To IF or IDX by TCP IN Connections</title>
+      <viz type="sankey_diagram_app.sankey_diagram">
+        <search>
+          <query>index=_internal  group=tcpin_connections   sourcetype=splunkd (hostname=$if1$ OR  host=$if1$)
+| rename hostname as from
+| rename host as to 
+| stats count by from to</query>
+          <earliest>$time1.earliest$</earliest>
+          <latest>$time1.latest$</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+        <option name="sankey_diagram_app.sankey_diagram.colorMode">categorical</option>
+        <option name="sankey_diagram_app.sankey_diagram.maxColor">#3fc77a</option>
+        <option name="sankey_diagram_app.sankey_diagram.minColor">#d93f3c</option>
+        <option name="sankey_diagram_app.sankey_diagram.numOfBins">6</option>
+        <option name="sankey_diagram_app.sankey_diagram.showBackwards">0</option>
+        <option name="sankey_diagram_app.sankey_diagram.showLabels">1</option>
+        <option name="sankey_diagram_app.sankey_diagram.showLegend">1</option>
+        <option name="sankey_diagram_app.sankey_diagram.showSelf">0</option>
+        <option name="sankey_diagram_app.sankey_diagram.showTooltip">1</option>
+        <option name="sankey_diagram_app.sankey_diagram.styleBackwards">0</option>
+        <option name="sankey_diagram_app.sankey_diagram.useColors">1</option>
+      </viz>
+    </panel>
+  </row>
+</form>
